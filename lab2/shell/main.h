@@ -21,9 +21,10 @@ enum Status{
     ERROR_WRONG_PARAMETER,
     ERROR_MISS_PARAMETER,
     ERROR_TOO_MANY_PARAMETER,
+    ERROR_CD_MISS_PARAMETER,
     ERROR_CD,
+    ERROR_CWD,
     ERROR_SYSTEM,
-    ERROR_EXIT,
 
     /* 重定向的错误信息 */
     ERROR_MANY_IN,
@@ -32,7 +33,8 @@ enum Status{
 
     /* 管道的错误信息 */
     ERROR_PIPE,
-    ERROR_PIPE_MISS_PARAMETER
+    ERROR_PIPE_MISS_PARAMETER,
+    NO_INNER_COMMAND
 };
 
 extern std::vector<std::string> args;

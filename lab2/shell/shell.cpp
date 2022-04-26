@@ -29,7 +29,7 @@ Status prepare() {
     std::string cmd;
     // 获取当前工作目录
     if (getcwd(current_path, BUFFER_SIZE) == nullptr) {
-        fprintf(stderr, "\e[31;1mError: System error while getting current work directory.\n\e[0m");
+        std::cerr<<"\e[31;1mError: System error while getting current work directory.\n\e[0m";
         exit(ERROR_SYSTEM);
     }
     // 获取当前登录的用户名
@@ -44,8 +44,8 @@ Status prepare() {
     args = split(cmd, " ");
 }
 
-int call_redirect_command( int head, unsigned tail) {
-    /* 判断是否有重定向 */
+int call_redirect_command(int head, unsigned tail) {
+    // 判断是否有重定向
     int inNum = 0, outNum = 0;
     //char *inFile = nullptr, *outFile = nullptr;
     std::string inFile, outFile;
@@ -121,7 +121,7 @@ int call_redirect_command( int head, unsigned tail) {
     return result;
 }
 
-int call_pipe_command( int head, unsigned tail) {
+int call_pipe_command(int head, unsigned tail) {
     if (head >= tail)
         return RESULT_NORMAL;
     // 判断是否有管道命令
@@ -133,7 +133,7 @@ int call_pipe_command( int head, unsigned tail) {
         }
     }
     if (pipe_index == -1) { // 不含有管道命令
-        return call_redirect_command( head, tail);
+        return call_redirect_command(head, tail);
     }
     /* 执行命令 */
     int fds[2];
@@ -179,14 +179,15 @@ int call_pipe_command( int head, unsigned tail) {
 
 Status call_outer_commands() {
     // 外部命令
+    std::cout<<getpid()<<std::endl;
     pid_t pid = fork();
-
+    std::cout<<getpid()<<std::endl;
     if (pid == 0) {
         // 这里只有子进程才会进入
         //获取标准输入、输出的文件标识符
         int inFds = dup(STDIN_FILENO);
         int outFds = dup(STDOUT_FILENO);
-        int result = call_pipe_command( 0, args.size());
+        int result = call_pipe_command(0, args.size());
         // 还原标准输入、输出重定向
         dup2(inFds, STDIN_FILENO);
         dup2(outFds, STDOUT_FILENO);
@@ -198,9 +199,9 @@ Status call_outer_commands() {
         std::cout << "wait failed";
     }
 }
-Status call_inner_commands(){
-    // 退出
-    if (args[0] == "exit") {
+
+Status call_inner_commands() {
+    if (args[0] == "exit") {    // 退出
         if (args.size() <= 1) {
             exit(0);
         }
@@ -211,30 +212,19 @@ Status call_inner_commands(){
         // 转换失败
         if (!code_stream.eof() || code_stream.fail()) {
             std::cout << "Invalid exit code\n";
-            return ERROR_EXIT;
+            exit(EOF);
         }
         exit(code);
-    }else
-
-    // 更改工作目录为目标目录
-    if (args[0] == "cd") {
+    } else if (args[0] == "cd") {// 更改工作目录为目标目录
         if (args.size() <= 1) {
-            // 输出的信息尽量为英文，非英文输出（其实是非 ASCII 输出）在没有特别配置的情况下（特别是 Windows 下）会乱码
-            // 如感兴趣可以自行搜索 GBK Unicode UTF-8 Codepage UTF-16 等进行学习
-            std::cout << "Insufficient arguments\n";
-            // 不要用 std::endl，std::endl = "\n" + fflush(stdout)
-            return ERROR_CD;
+            return ERROR_CD_MISS_PARAMETER;
         }
-        // 调用系统 API
+        // 调用系统应用程序接口
         int ret = chdir(args[1].c_str());
         if (ret < 0) {
-            std::cout << "cd failed\n";
+            return ERROR_CD;
         }
-        return ERROR_CD;
-    }else
-
-    // 显示当前工作目录
-    if (args[0] == "pwd") {
+    } else if (args[0] == "pwd") {// 显示当前工作目录
         std::string cwd;
         // 预先分配好空间
         cwd.resize(PATH_MAX);
@@ -244,13 +234,12 @@ Status call_inner_commands(){
         if (ret == nullptr) {
             std::cout << "cwd failed\n";
         } else {
-            std::cout << ret << "\n";
+            //std::cout.setf(std::ios::unitbuf);
+            //std::cout <<ret << std::endl;
+            printf("%s\n",ret);
         }
-        return ERROR_CD;//TODO
-    }else
-
-    // 设置环境变量
-    if (args[0] == "export") {
+        //return ERROR_CD;
+    } else if (args[0] == "export") {// 设置环境变量
         for (auto i = ++args.begin(); i != args.end(); i++) {
             std::string key = *i;
             // std::string 默认为空
@@ -268,4 +257,5 @@ Status call_inner_commands(){
             }
         }
     }
+    return NO_INNER_COMMAND;
 }

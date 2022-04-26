@@ -13,6 +13,7 @@ std::vector<std::string> args;
 int main() {
     // 不同步 iostream 和 cstdio 的 buffer
     std::ios::sync_with_stdio(false);
+    //std::cout.setf(std::ios::unitbuf);
     //无限循环
     while (true) {
         //打印提示符并读取一行，分割命令
@@ -20,9 +21,9 @@ int main() {
         // 有可处理的命令
         if (!args.empty()) {
             //处理内部指令
-            error_process(call_inner_commands());
+            if(error_process(call_inner_commands()))
             //处理外部指令
-            error_process(call_outer_commands());
+                error_process(call_outer_commands());
         }
     }
     //一个好习惯

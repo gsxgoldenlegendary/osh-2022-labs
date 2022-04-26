@@ -21,7 +21,6 @@ enum Status{
     ERROR_WRONG_PARAMETER,
     ERROR_MISS_PARAMETER,
     ERROR_TOO_MANY_PARAMETER,
-    ERROR_CD_MISS_PARAMETER,
     ERROR_CD,
     ERROR_CWD,
     ERROR_SYSTEM,
@@ -35,7 +34,8 @@ enum Status{
     ERROR_PIPE,
     ERROR_PIPE_MISS_PARAMETER,
     NO_INNER_COMMAND,
-    ERROR_WAIT
+    ERROR_WAIT,
+    INNER_COMMAND
 };
 
 extern std::vector<std::string> args;

@@ -5,10 +5,10 @@
 #include "error.h"
 bool error_process(Status e){
     switch (e) {
-        default:;
         case RESULT_NORMAL:
             break;
         case ERROR_FORK:
+            std::cerr<<"\e[31;1mError: Fork error.\n\e[0m";
             break;
         case ERROR_COMMAND:
             break;
@@ -44,6 +44,8 @@ bool error_process(Status e){
             break;
         case NO_INNER_COMMAND:
             return false;
+        case ERROR_WAIT:
+            std::cerr<<"\e[31;1mwait failed.\n\e[0m";
             break;
     }
 }

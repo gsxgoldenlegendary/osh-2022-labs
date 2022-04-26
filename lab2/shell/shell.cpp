@@ -29,7 +29,7 @@ Status prepare() {
     std::string cmd;
     // 获取当前工作目录
     if (getcwd(current_path, BUFFER_SIZE) == nullptr) {
-        std::cerr<<"\e[31;1mError: System error while getting current work directory.\n\e[0m";
+        std::cerr << "\e[31;1mError: System error while getting current work directory.\n\e[0m";
         exit(ERROR_SYSTEM);
     }
     // 获取当前登录的用户名
@@ -179,10 +179,10 @@ int call_pipe_command(int head, unsigned tail) {
 
 Status call_outer_commands() {
     // 外部命令
-    std::cout<<getpid()<<std::endl;
     pid_t pid = fork();
-    std::cout<<getpid()<<std::endl;
-    if (pid == 0) {
+    if (pid == -1) {
+        return ERROR_FORK;
+    }    if (pid == 0) {
         // 这里只有子进程才会进入
         //获取标准输入、输出的文件标识符
         int inFds = dup(STDIN_FILENO);
@@ -196,7 +196,7 @@ Status call_outer_commands() {
     // 这里只有父进程（原进程）才会进入
     int ret = wait(nullptr);
     if (ret < 0) {
-        std::cout << "wait failed";
+        return ERROR_WAIT;
     }
 }
 
@@ -234,11 +234,8 @@ Status call_inner_commands() {
         if (ret == nullptr) {
             std::cout << "cwd failed\n";
         } else {
-            //std::cout.setf(std::ios::unitbuf);
-            //std::cout <<ret << std::endl;
-            printf("%s\n",ret);
+            std::cout << ret << std::endl;
         }
-        //return ERROR_CD;
     } else if (args[0] == "export") {// 设置环境变量
         for (auto i = ++args.begin(); i != args.end(); i++) {
             std::string key = *i;

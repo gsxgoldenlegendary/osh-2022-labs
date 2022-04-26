@@ -34,7 +34,8 @@ enum Status{
     /* 管道的错误信息 */
     ERROR_PIPE,
     ERROR_PIPE_MISS_PARAMETER,
-    NO_INNER_COMMAND
+    NO_INNER_COMMAND,
+    ERROR_WAIT
 };
 
 extern std::vector<std::string> args;

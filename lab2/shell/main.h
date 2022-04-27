@@ -14,7 +14,7 @@
 #define BUFFER_SIZE 256
 
 // 内置的状态码
-enum Status{
+enum Status {
     RESULT_NORMAL,
     ERROR_FORK,
     ERROR_COMMAND,
@@ -22,8 +22,8 @@ enum Status{
     ERROR_MISS_PARAMETER,
     ERROR_TOO_MANY_PARAMETER,
     ERROR_CD,
-    ERROR_CWD,
     ERROR_SYSTEM,
+    ERROR_EXIT,
 
     /* 重定向的错误信息 */
     ERROR_MANY_IN,
@@ -33,11 +33,11 @@ enum Status{
     /* 管道的错误信息 */
     ERROR_PIPE,
     ERROR_PIPE_MISS_PARAMETER,
-    NO_INNER_COMMAND,
-    ERROR_WAIT,
-    INNER_COMMAND
+    INNER_COMMAND,
+    NO_INNER_COMMAND
 };
 
-extern std::vector<std::string> args;
+
+extern char commands[BUFFER_SIZE][BUFFER_SIZE];
 
 #endif //SHELL_MAIN_H

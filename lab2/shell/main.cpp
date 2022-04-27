@@ -6,24 +6,22 @@
 #include "shell.h"
 #include "error.h"
 
-//命令行参数构成的容器
-std::vector<std::string> args;
+char commands[BUFFER_SIZE][BUFFER_SIZE];
 
 //这是主函数，程序的主要部分
 int main() {
-    // 不同步 iostream 和 cstdio 的 buffer
-    std::ios::sync_with_stdio(false);
-    //std::cout.setf(std::ios::unitbuf);
-    //无限循环
     while (true) {
-        //打印提示符并读取一行，分割命令
+        //获取用户名、主机名及工作目录
         error_process(prepare());
-        // 有可处理的命令
-        if (!args.empty()) {
-            //处理内部指令
-            if(error_process(call_inner_commands()))
-            //处理外部指令
-                error_process(call_outer_commands());
+        int commandNum = spilt_command();
+        if (commandNum != 0) { // 用户有输入指令
+            if (strcmp(commands[0], "exit") == 0) { // exit命令
+                error_process(callExit());
+            } else if (strcmp(commands[0], "cd") == 0) { // cd命令
+                error_process(callCd(commandNum));
+            } else { // 其它命令
+                error_process(call_outer_command(commandNum));
+            }
         }
     }
     //一个好习惯

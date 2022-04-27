@@ -3,51 +3,53 @@
 //
 
 #include "error.h"
-bool error_process(Status e){
+
+bool error_process(Status e) {
     switch (e) {
         case RESULT_NORMAL:
             break;
-        case ERROR_FORK:
-            std::cerr<<"\e[31;1mError: Fork error.\n\e[0m";
-            break;
-        case ERROR_COMMAND:
-            std::cerr<<"\e[31;1mError: Command not exist in myshell.\n\e[0m";
-            break;
         case ERROR_WRONG_PARAMETER:
-            break;
-        case ERROR_MISS_PARAMETER:
-            // 输出的信息尽量为英文，非英文输出（其实是非 ASCII 输出）在没有特别配置的情况下（特别是 Windows 下）会乱码
-            // 如感兴趣可以自行搜索 GBK Unicode UTF-8 Codepage UTF-16 等进行学习
-            std::cerr<<"\e[31;1mMiss parameter.\n\e[0m";
-            // 不要用 std::endl，std::endl = "\n" + fflush(stdout)
+            fprintf(stderr, "\e[31;1mError: No such path \"%s\".\n\e[0m", commands[1]);
             break;
         case ERROR_TOO_MANY_PARAMETER:
-            std::cerr<<"\e[31;1mToo many parameters.\n\e[0m";
+            fprintf(stderr, "\e[31;1mError: Too many parameters while using command \"%s\".\n\e[0m",
+                    "cd");
             break;
-        case ERROR_SYSTEM:
+        case ERROR_FORK:
+            fprintf(stderr, "\e[31;1mError: Fork error.\n\e[0m");
+            exit(ERROR_FORK);
+        case ERROR_COMMAND:
+            fprintf(stderr, "\e[31;1mError: Command not exist in myshell.\n\e[0m");
             break;
         case ERROR_MANY_IN:
+            fprintf(stderr, "\e[31;1mError: Too many redirection symbol \"<\".\n\e[0m");
             break;
         case ERROR_MANY_OUT:
+            fprintf(stderr, "\e[31;1mError: Too many redirection symbol \">\".\n\e[0m");
             break;
         case ERROR_FILE_NOT_EXIST:
+            fprintf(stderr, "\e[31;1mError: Input redirection file not exist.\n\e[0m");
+            break;
+        case ERROR_MISS_PARAMETER:
+            fprintf(stderr, "\e[31;1mError: Miss redirect file parameters.\n\e[0m");
             break;
         case ERROR_PIPE:
+            fprintf(stderr, "\e[31;1mError: Open pipe error.\n\e[0m");
             break;
         case ERROR_PIPE_MISS_PARAMETER:
+            fprintf(stderr, "\e[31;1mError: Miss pipe parameters.\n\e[0m");
             break;
         case ERROR_CD:
-            std::cerr<<"\e[31;1mcd failed.\n\e[0m";
+            std::cerr << "\e[31;1mcd failed.\n\e[0m";
             break;
-        case ERROR_CWD:
-            std::cerr<<"\e[31;1mcwd failed.\n\e[0m";
+        case ERROR_EXIT:
+            exit(-1);
+        case INNER_COMMAND:
             break;
         case NO_INNER_COMMAND:
-            return true;
-        case ERROR_WAIT:
-            std::cerr<<"\e[31;1mwait failed.\n\e[0m";
             break;
-        case INNER_COMMAND:
-            return false;
+        case ERROR_SYSTEM:
+            fprintf(stderr, "\e[31;1mError: System error while getting current work directory.\n\e[0m");
+            exit(ERROR_SYSTEM);
     }
 }

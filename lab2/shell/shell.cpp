@@ -3,11 +3,10 @@
 //
 #include "shell.h"
 
-int command_exist(const char *command) { // 判断指令是否存在
-    if (command == nullptr || strlen(command) == 0) return false;
-
+int command_exist(const std::string& command) { // 判断指令是否存在
+    if(command.empty())
+        return false;
     int result = true;
-
     int fds[2];
     if (pipe(fds) == -1) {
         result = false;
@@ -15,7 +14,6 @@ int command_exist(const char *command) { // 判断指令是否存在
         /* 暂存输入输出重定向标志 */
         int inFd = dup(STDIN_FILENO);
         int outFd = dup(STDOUT_FILENO);
-
         pid_t pid = vfork();
         if (pid == -1) {
             result = false;
@@ -24,10 +22,8 @@ int command_exist(const char *command) { // 判断指令是否存在
             close(fds[0]);
             dup2(fds[1], STDOUT_FILENO);
             close(fds[1]);
-
-            char tmp[BUFFER_SIZE];
-            sprintf(tmp, "command -v %s", command);
-            system(tmp);
+            std::string tmp="command -v "+command;
+            system(tmp.c_str());
             exit(1);
         } else {
             waitpid(pid, nullptr, 0);
@@ -35,17 +31,14 @@ int command_exist(const char *command) { // 判断指令是否存在
             close(fds[1]);
             dup2(fds[0], STDIN_FILENO);
             close(fds[0]);
-
             if (getchar() == EOF) { // 没有数据，意味着命令不存在
                 result = false;
             }
-
             /* 恢复输入、输出重定向 */
             dup2(inFd, STDIN_FILENO);
             dup2(outFd, STDOUT_FILENO);
         }
     }
-
     return result;
 }
 
@@ -132,7 +125,7 @@ Status call_pipe_command(unsigned long head, unsigned long tail) { // 所要执�
 }
 
 Status call_redirect_command(unsigned long head, unsigned long tail) { // 所要执行的指令区间[head, tail)，不含管道，可能含有重定向
-    if (!command_exist(commands[head])) { // 指令不存在
+    if (!command_exist(args[head])) { // 指令不存在
         return ERROR_COMMAND;
     }
     /* 判断是否有重定向 */

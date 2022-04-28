@@ -208,7 +208,11 @@ Status prepare() {
 
 void spilt_command() {
     std::string cmd;
+
+
     std::getline(std::cin, cmd);
+
+
     args = split(cmd, " ");
     for (auto i = 0; i < args.size(); ++i) {
         strcpy(commands[i], args[i].c_str());
@@ -217,15 +221,10 @@ void spilt_command() {
 
 Status call_inner_command() {
     if (strcmp(commands[0], "exit") == 0) { // exit命令
-        // std::string 转 int
-        std::stringstream code_stream(commands[1]);
-        int code = 0;
-        code_stream >> code;
-        // 转换失败
-        if (!code_stream.eof() || code_stream.fail())
+        pid_t pid = getpid();
+        if (kill(pid, SIGTERM) == -1)
             return ERROR_EXIT;
-        else
-            return RESULT_NORMAL;
+        else return RESULT_NORMAL;
     } else if (strcmp(commands[0], "cd") == 0) { // cd命令
         if (args.size() <= 1) {
             // 输出的信息尽量为英文，非英文输出（其实是非 ASCII 输出）在没有特别配置的情况下（特别是 Windows 下）会乱码

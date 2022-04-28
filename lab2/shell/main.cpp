@@ -9,8 +9,15 @@
 char commands[BUFFER_SIZE][BUFFER_SIZE];
 std::vector<std::string> args;
 
+void sighandler(int sig){
+    if(sig==SIGINT) {
+        waitpid(0, nullptr, 0);
+    }
+}
+
 //这是主函数，程序的主要部分
 int main() {
+    signal(SIGINT, sighandler);
     while (true) {
         //获取用户名、主机名及工作目录
         error_process(prepare());

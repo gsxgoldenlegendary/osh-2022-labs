@@ -21,11 +21,8 @@ bool error_process(Status e) {
         case ERROR_COMMAND:
             fprintf(stderr, "\e[31;1mError: Command not exist in myshell.\n\e[0m");
             break;
-        case ERROR_MANY_IN:
+        case ERROR_MANY_IN_OUT:
             fprintf(stderr, "\e[31;1mError: Too many redirection symbol \"<\".\n\e[0m");
-            break;
-        case ERROR_MANY_OUT:
-            fprintf(stderr, "\e[31;1mError: Too many redirection symbol \">\".\n\e[0m");
             break;
         case ERROR_FILE_NOT_EXIST:
             fprintf(stderr, "\e[31;1mError: Input redirection file not exist.\n\e[0m");

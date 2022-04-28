@@ -3,8 +3,8 @@
 //
 #include "shell.h"
 
-int command_exist(const std::string& command) { // 判断指令是否存在
-    if(command.empty())
+int command_exist(const std::string &command) { // 判断指令是否存在
+    if (command.empty())
         return false;
     int result = true;
     int fds[2];
@@ -22,7 +22,7 @@ int command_exist(const std::string& command) { // 判断指令是否存在
             close(fds[0]);
             dup2(fds[1], STDOUT_FILENO);
             close(fds[1]);
-            std::string tmp="command -v "+command;
+            std::string tmp = "command -v " + command;
             system(tmp.c_str());
             exit(1);
         } else {
@@ -50,9 +50,7 @@ Status call_outer_command() { // 给用户使用的函数，用以执行用户�
         /* 获取标准输入、输出的文件标识符 */
         int inFds = dup(STDIN_FILENO);
         int outFds = dup(STDOUT_FILENO);
-
         int result = call_pipe_command(0, args.size());
-
         /* 还原标准输入、输出重定向 */
         dup2(inFds, STDIN_FILENO);
         dup2(outFds, STDOUT_FILENO);
@@ -65,7 +63,8 @@ Status call_outer_command() { // 给用户使用的函数，用以执行用户�
 }
 
 Status call_pipe_command(unsigned long head, unsigned long tail) { // 所要执行的指令区间[head, tail)，可能含有管道
-    if (head >= tail) return RESULT_NORMAL;
+    if (head >= tail)
+        return RESULT_NORMAL;
     /* 判断是否有管道命令 */
     int pipeIdx = -1;
     for (auto i = head; i < tail; ++i) {
@@ -79,7 +78,6 @@ Status call_pipe_command(unsigned long head, unsigned long tail) { // 所要执�
     } else if (pipeIdx + 1 == tail) { // 管道命令'|'后续没有指令，参数缺失
         return ERROR_PIPE_MISS_PARAMETER;
     }
-
     /* 执行命令 */
     int fds[2];
     if (pipe(fds) == -1) {
@@ -93,14 +91,12 @@ Status call_pipe_command(unsigned long head, unsigned long tail) { // 所要执�
         close(fds[0]);
         dup2(fds[1], STDOUT_FILENO); // 将标准输出重定向到fds[1]
         close(fds[1]);
-
         result = call_redirect_command(head, pipeIdx);
         exit(result);
     } else { // 父进程递归执行后续命令
         int status;
         waitpid(pid, &status, 0);
         int exitCode = WEXITSTATUS(status);
-
         if (exitCode != RESULT_NORMAL) { // 子进程的指令没有正常退出，打印错误信息
             char info[4096] = {0};
             char line[BUFFER_SIZE];
@@ -111,7 +107,6 @@ Status call_pipe_command(unsigned long head, unsigned long tail) { // 所要执�
                 strcat(info, line);
             }
             printf("%s", info); // 打印错误信息
-
             result = exitCode;
         } else if (pipeIdx + 1 < tail) {
             close(fds[1]);
@@ -120,62 +115,59 @@ Status call_pipe_command(unsigned long head, unsigned long tail) { // 所要执�
             result = call_pipe_command(pipeIdx + 1, tail); // 递归执行后续指令
         }
     }
-
     return Status(result);
 }
 
-Status call_redirect_command(unsigned long head, unsigned long tail) { // 所要执行的指令区间[head, tail)，不含管道，可能含有重定向
-    if (!command_exist(args[head])) { // 指令不存在
+Status call_redirect_command(unsigned long head, unsigned long tail) {
+    if (!command_exist(args[head])) {
         return ERROR_COMMAND;
     }
-    /* 判断是否有重定向 */
-    int inNum = 0, outNum = 0;
-    char *inFile = nullptr, *outFile = nullptr;
-    unsigned long endIdx = tail; // 指令在重定向前的终止下标
-
+    int input_number = 0, output_number_w = 0, output_number_a = 0;
+    char *input_file = nullptr, *output_file_w = nullptr, *output_file_a = nullptr;
+    unsigned long endIdx = tail;
     for (auto i = head; i < tail; ++i) {
-        if (strcmp(commands[i], "<") == 0) { // 输入重定向
-            ++inNum;
+        if (strcmp(commands[i], "<") == 0) {
+            ++input_number;
             if (i + 1 < tail)
-                inFile = commands[i + 1];
-            else return ERROR_MISS_PARAMETER; // 重定向符号后缺少文件名
-
+                input_file = commands[i + 1];
+            else return ERROR_MISS_PARAMETER;
             endIdx = i;
-        } else if (strcmp(commands[i], ">") == 0) { // 输出重定向
-            ++outNum;
+        } else if (strcmp(commands[i], ">") == 0) {
+            ++output_number_w;
             if (i + 1 < tail)
-                outFile = commands[i + 1];
-            else return ERROR_MISS_PARAMETER; // 重定向符号后缺少文件名
-
+                output_file_w = commands[i + 1];
+            else return ERROR_MISS_PARAMETER;
+            endIdx = i;
+        } else if (strcmp(commands[i], ">>") == 0) {
+            ++output_number_a;
+            if (i + 1 < tail)
+                output_file_a = commands[i + 1];
+            else return ERROR_MISS_PARAMETER;
             endIdx = i;
         }
     }
     /* 处理重定向 */
-    if (inNum == 1) {
-        FILE *fp = fopen(inFile, "r");
+    if (input_number == 1) {
+        FILE *fp = fopen(input_file, "r");
         if (fp == nullptr) // 输入重定向文件不存在
             return ERROR_FILE_NOT_EXIST;
-
         fclose(fp);
     }
-
-    if (inNum > 1) { // 输入重定向符超过一个
-        return ERROR_MANY_IN;
-    } else if (outNum > 1) { // 输出重定向符超过一个
-        return ERROR_MANY_OUT;
+    if (input_number > 1 || output_number_w > 1 || output_number_a > 1) {
+        return ERROR_MANY_IN_OUT;
     }
-
     auto result = RESULT_NORMAL;
     pid_t pid = vfork();
     if (pid == -1) {
         result = ERROR_FORK;
     } else if (pid == 0) {
         /* 输入输出重定向 */
-        if (inNum == 1)
-            freopen(inFile, "r", stdin);
-        if (outNum == 1)
-            freopen(outFile, "w", stdout);
-
+        if (input_number == 1)
+            freopen(input_file, "r", stdin);
+        if (output_number_w == 1)
+            freopen(output_file_w, "w", stdout);
+        else if (output_number_a == 1)
+            freopen(output_file_a, "a", stdout);
         /* 执行命令 */
         char *comm[BUFFER_SIZE];
         for (auto i = head; i < endIdx; ++i)
@@ -187,7 +179,6 @@ Status call_redirect_command(unsigned long head, unsigned long tail) { // 所要
         int status;
         waitpid(pid, &status, 0);
         int err = WEXITSTATUS(status); // 读取子进程的返回码
-
         if (err) { // 返回码不为0，意味着子进程执行出错，用红色字体打印出错信息
             printf("\e[31;1mError: %s\n\e[0m", strerror(err));
         }
@@ -219,8 +210,8 @@ void spilt_command() {
     std::string cmd;
     std::getline(std::cin, cmd);
     args = split(cmd, " ");
-    for(auto i=0;i<args.size();++i){
-        strcpy(commands[i],args[i].c_str());
+    for (auto i = 0; i < args.size(); ++i) {
+        strcpy(commands[i], args[i].c_str());
     }
 }
 
@@ -248,7 +239,7 @@ Status call_inner_command() {
                 return ERROR_WRONG_PARAMETER;
         }
         return RESULT_NORMAL;
-    } else if (strcmp(commands[0], "export")==0) {
+    } else if (strcmp(commands[0], "export") == 0) {
         for (auto i = ++args.begin(); i != args.end(); i++) {
             std::string key = *i;
             // std::string 默认为空
@@ -266,7 +257,7 @@ Status call_inner_command() {
             }
         }
         return RESULT_NORMAL;
-    }else
+    } else
         return NO_INNER_COMMAND;
 }
 
@@ -274,7 +265,7 @@ Status call_inner_command() {
 // https://stackoverflow.com/a/14266139/11691878
 std::vector<std::string> split(std::string s, const std::string &delimiter) {
     std::vector<std::string> res;
-    size_t pos ;
+    size_t pos;
     std::string token;
     while ((pos = s.find(delimiter)) != std::string::npos) {
         token = s.substr(0, pos);

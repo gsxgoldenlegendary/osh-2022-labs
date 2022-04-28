@@ -26,8 +26,7 @@ enum Status {
     ERROR_EXIT,
 
     /* 重定向的错误信息 */
-    ERROR_MANY_IN,
-    ERROR_MANY_OUT,
+    ERROR_MANY_IN_OUT,
     ERROR_FILE_NOT_EXIST,
 
     /* 管道的错误信息 */

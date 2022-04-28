@@ -9,18 +9,18 @@
 
 int command_exist(const char *);
 
-Status callExit();
+Status call_outer_command();
 
-Status call_outer_command(int);
+Status call_pipe_command(unsigned long, unsigned long);
 
-Status call_pipe_command(int, int);
-
-Status call_redirect_command(int, int);
-
-Status callCd(int);
+Status call_redirect_command(unsigned long, unsigned long);
 
 Status prepare();
 
-int spilt_command();
+void spilt_command();
+
+Status call_inner_command();
+
+std::vector<std::string> split(std::string, const std::string &);
 
 #endif //SHELL_SHELL_H

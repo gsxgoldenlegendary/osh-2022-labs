@@ -33,11 +33,12 @@ enum Status {
     /* 管道的错误信息 */
     ERROR_PIPE,
     ERROR_PIPE_MISS_PARAMETER,
-    INNER_COMMAND,
-    NO_INNER_COMMAND
+    NO_INNER_COMMAND,
+    ERROR_EXPORT
 };
 
 
 extern char commands[BUFFER_SIZE][BUFFER_SIZE];
+extern std::vector<std::string> args;
 
 #endif //SHELL_MAIN_H

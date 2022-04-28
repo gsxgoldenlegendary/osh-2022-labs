@@ -7,7 +7,7 @@
 bool error_process(Status e) {
     switch (e) {
         case RESULT_NORMAL:
-            break;
+            return true;
         case ERROR_WRONG_PARAMETER:
             fprintf(stderr, "\e[31;1mError: No such path \"%s\".\n\e[0m", commands[1]);
             break;
@@ -44,12 +44,14 @@ bool error_process(Status e) {
             break;
         case ERROR_EXIT:
             exit(-1);
-        case INNER_COMMAND:
-            break;
         case NO_INNER_COMMAND:
-            break;
+            return false;
         case ERROR_SYSTEM:
             fprintf(stderr, "\e[31;1mError: System error while getting current work directory.\n\e[0m");
             exit(ERROR_SYSTEM);
+        case ERROR_EXPORT:
+            std::cerr << "\e[31;1export failed.\n\e[0m";
+            break;
     }
+    return true;
 }

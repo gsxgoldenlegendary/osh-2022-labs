@@ -202,21 +202,45 @@ Status prepare() {
     // 获取主机名
     gethostname(hostname, BUFFER_SIZE);
 
-        std::cout << "\e[32;1m" << username << "@" << hostname << ":" << curPath << "\e[0m$ ";
-        std::cout.flush();
+    std::cout << "\e[32;1m" << username << "@" << hostname << ":" << curPath << "\e[0m$ ";
+    std::cout.flush();
 
 
     return result;
 }
 
-void spilt_command() {
+bool spilt_command() {
+    static unsigned long long command_number=0;
     std::string cmd;
     std::getline(std::cin, cmd);
-    args = split(cmd, " ");
-
+    auto temp = split(cmd, " ");
+    if (temp[0] == "history"){
+        command_number++;
+        history.push_back(cmd);
+        unsigned long long n= stoull(temp[1]);
+        if(n>command_number)
+            n=command_number;
+        for(auto i=command_number-n;i<command_number;++i)
+            std::cout<<i<<"\t"<<history[i]<<std::endl;
+        return false;
+    }else if(temp[0][0]=='!'){
+        unsigned long long n;
+        if(temp[0][1]=='!'){
+            n=command_number-1;
+        }else {
+            n = stoull(temp[0].substr(1));
+        }
+        args=split(history[n]," ");
+        std::cout<<n<<"\t"<<history[n]<<std::endl;
+    }else{
+        command_number++;
+        history.push_back(cmd);
+        args=temp;
+    }
     for (auto i = 0; i < args.size(); ++i) {
         strcpy(commands[i], args[i].c_str());
     }
+    return true;
 }
 
 Status call_inner_command() {

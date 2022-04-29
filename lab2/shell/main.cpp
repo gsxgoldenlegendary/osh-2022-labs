@@ -8,6 +8,7 @@
 
 char commands[BUFFER_SIZE][BUFFER_SIZE];
 std::vector<std::string> args;
+std::vector<std::string> history;
 
 void sighandler(int sig){
     if(sig==SIGINT) {
@@ -22,8 +23,7 @@ int main() {
     while (true) {
         //获取用户名、主机名及工作目录
         error_process(prepare());
-        spilt_command();
-        if (!args.empty()) { // 用户有输入指令
+        if (spilt_command()) { // 用户有输入指令
             if (!error_process(call_inner_command()))
                 error_process(call_outer_command());
         }

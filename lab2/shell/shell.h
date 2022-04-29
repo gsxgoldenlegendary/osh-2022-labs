@@ -17,7 +17,7 @@ Status call_redirect_command(unsigned long, unsigned long);
 
 Status prepare();
 
-void spilt_command();
+bool spilt_command();
 
 Status call_inner_command();
 

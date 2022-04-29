@@ -33,5 +33,5 @@ enum Status {
 
 extern char commands[BUFFER_SIZE][BUFFER_SIZE];
 extern std::vector<std::string> args;
-
+extern std::vector<std::string> history;
 #endif //SHELL_MAIN_H

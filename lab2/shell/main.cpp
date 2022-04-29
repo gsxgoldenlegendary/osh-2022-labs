@@ -10,8 +10,8 @@ char commands[BUFFER_SIZE][BUFFER_SIZE];
 std::vector<std::string> args;
 std::vector<std::string> history;
 
-void sighandler(int sig){
-    if(sig==SIGINT) {
+void sighandler(int sig) {
+    if (sig == SIGINT) {
         waitpid(0, nullptr, 0);
     }
     prepare();
@@ -20,6 +20,15 @@ void sighandler(int sig){
 //这是主函数，程序的主要部分
 int main() {
     signal(SIGINT, sighandler);
+    std::ifstream inputer;
+    inputer.open(".supershell");
+    if (inputer.is_open()) {
+        std::string temp;
+        while (getline(inputer,temp)) {
+            history.push_back(temp);
+        }
+        inputer.close();
+    }
     while (true) {
         //获取用户名、主机名及工作目录
         error_process(prepare());

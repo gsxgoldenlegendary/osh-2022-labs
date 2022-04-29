@@ -210,32 +210,35 @@ Status prepare() {
 }
 
 bool spilt_command() {
-    static unsigned long long command_number=0;
+    static unsigned long long command_number;
     std::string cmd;
     std::getline(std::cin, cmd);
     auto temp = split(cmd, " ");
-    if (temp[0] == "history"){
-        command_number++;
-        history.push_back(cmd);
-        unsigned long long n= stoull(temp[1]);
-        if(n>command_number)
-            n=command_number;
-        for(auto i=command_number-n;i<command_number;++i)
-            std::cout<<i<<"\t"<<history[i]<<std::endl;
-        return false;
-    }else if(temp[0][0]=='!'){
+    if (temp[0][0] == '!') {
         unsigned long long n;
-        if(temp[0][1]=='!'){
-            n=command_number-1;
-        }else {
+        command_number = history.size();
+        if (temp[0][1] == '!') {
+            n = command_number - 1;
+        } else {
             n = stoull(temp[0].substr(1));
         }
-        args=split(history[n]," ");
-        std::cout<<n<<"\t"<<history[n]<<std::endl;
-    }else{
-        command_number++;
-        history.push_back(cmd);
-        args=temp;
+        temp = split(history[n], " ");
+        std::cout << n << "\t" << history[n] << std::endl;
+    }
+    if (temp[0] == "history") {
+        if (cmd[0] != '!')
+            history.push_back(cmd);
+        command_number = history.size();
+        unsigned long long n = stoull(temp[1]);
+        if (n > command_number)
+            n = command_number;
+        for (auto i = command_number - n; i < command_number; ++i)
+            std::cout << i << "\t" << history[i] << std::endl;
+        return false;
+    } else {
+        if (cmd[0] != '!')
+            history.push_back(cmd);
+        args = temp;
     }
     for (auto i = 0; i < args.size(); ++i) {
         strcpy(commands[i], args[i].c_str());
@@ -245,6 +248,12 @@ bool spilt_command() {
 
 Status call_inner_command() {
     if (strcmp(commands[0], "exit") == 0) { // exit命令
+        std::ofstream outputer;
+        outputer.open(".supershell");
+        for (auto &&x: history) {
+            outputer << x << std::endl;
+        }
+        outputer.close();
         pid_t pid = getpid();
         if (kill(pid, SIGTERM) == -1)
             return ERROR_EXIT;

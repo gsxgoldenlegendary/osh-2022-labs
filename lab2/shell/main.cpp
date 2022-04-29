@@ -13,6 +13,7 @@ void sighandler(int sig){
     if(sig==SIGINT) {
         waitpid(0, nullptr, 0);
     }
+    prepare();
 }
 
 //这是主函数，程序的主要部分

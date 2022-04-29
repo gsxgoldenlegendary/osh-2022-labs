@@ -201,19 +201,19 @@ Status prepare() {
     strcpy(username, pwd->pw_name);
     // 获取主机名
     gethostname(hostname, BUFFER_SIZE);
-    std::cout << "\e[32;1m" << username << "@" << hostname << ":" << curPath << "\e[0m$ ";
-    std::cout.flush();
+
+        std::cout << "\e[32;1m" << username << "@" << hostname << ":" << curPath << "\e[0m$ ";
+        std::cout.flush();
+
+
     return result;
 }
 
 void spilt_command() {
     std::string cmd;
-
-
     std::getline(std::cin, cmd);
-
-
     args = split(cmd, " ");
+
     for (auto i = 0; i < args.size(); ++i) {
         strcpy(commands[i], args[i].c_str());
     }

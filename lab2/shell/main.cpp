@@ -14,26 +14,25 @@ void sighandler(int sig) {
     if (sig == SIGINT) {
         waitpid(0, nullptr, 0);
     }
+    //输出提示符
     prepare();
 }
 
 //这是主函数，程序的主要部分
 int main() {
+    //处理Ctrl+C
     signal(SIGINT, sighandler);
-    std::ifstream inputer;
-    inputer.open(".supershell");
-    if (inputer.is_open()) {
-        std::string temp;
-        while (getline(inputer,temp)) {
-            history.push_back(temp);
-        }
-        inputer.close();
-    }
+    //读历史记录
+    read_history();
+    //无限循环
     while (true) {
-        //获取用户名、主机名及工作目录
+        //输出提示符
         error_process(prepare());
-        if (spilt_command()) { // 用户有输入指令
+        //有命令
+        if (spilt_command()) {
+            //执行内部指令
             if (!error_process(call_inner_command()))
+                //执行外部指令
                 error_process(call_outer_command());
         }
     }

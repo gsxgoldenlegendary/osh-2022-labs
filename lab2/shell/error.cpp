@@ -12,8 +12,7 @@ bool error_process(Status e) {
             fprintf(stderr, "\e[31;1mError: No such path \"%s\".\n\e[0m", commands[1]);
             break;
         case ERROR_TOO_MANY_PARAMETER:
-            fprintf(stderr, "\e[31;1mError: Too many parameters while using command \"%s\".\n\e[0m",
-                    "cd");
+            fprintf(stderr, "\e[31;1mError: Too many parameters while using command .\n\e[0m");
             break;
         case ERROR_FORK:
             fprintf(stderr, "\e[31;1mError: Fork error.\n\e[0m");

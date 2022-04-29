@@ -201,11 +201,8 @@ Status prepare() {
     strcpy(username, pwd->pw_name);
     // 获取主机名
     gethostname(hostname, BUFFER_SIZE);
-
     std::cout << "\e[32;1m" << username << "@" << hostname << ":" << curPath << "\e[0m$ ";
     std::cout.flush();
-
-
     return result;
 }
 
@@ -257,7 +254,8 @@ Status call_inner_command() {
         pid_t pid = getpid();
         if (kill(pid, SIGTERM) == -1)
             return ERROR_EXIT;
-        else return RESULT_NORMAL;
+        else
+            return RESULT_NORMAL;
     } else if (strcmp(commands[0], "cd") == 0) { // cd命令
         if (args.size() <= 1) {
             // 输出的信息尽量为英文，非英文输出（其实是非 ASCII 输出）在没有特别配置的情况下（特别是 Windows 下）会乱码
@@ -306,4 +304,16 @@ std::vector<std::string> split(std::string s, const std::string &delimiter) {
     }
     res.push_back(s);
     return res;
+}
+
+void read_history(){
+    std::ifstream inputer;
+    inputer.open(".supershell");
+    if (inputer.is_open()) {
+        std::string temp;
+        while (getline(inputer,temp)) {
+            history.push_back(temp);
+        }
+        inputer.close();
+    }
 }

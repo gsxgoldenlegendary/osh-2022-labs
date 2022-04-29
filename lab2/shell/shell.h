@@ -23,4 +23,6 @@ Status call_inner_command();
 
 std::vector<std::string> split(std::string, const std::string &);
 
+void read_history();
+
 #endif //SHELL_SHELL_H

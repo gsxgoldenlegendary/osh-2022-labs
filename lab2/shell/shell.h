@@ -7,7 +7,7 @@
 
 #include "main.h"
 
-int command_exist(const std::string&);
+bool command_exist(const std::string &);
 
 Status call_outer_command();
 

@@ -208,12 +208,71 @@ Status prepare() {
 
 bool spilt_command() {
     static unsigned long long command_number;
+    command_number = history.size();
     std::string cmd;
-    std::getline(std::cin, cmd);
+    std::string input_buffer;
+    //std::getline(std::cin, cmd);
+    int character;
+    system("stty -icanon");
+    while (true) {
+        character = getchar();
+        if (character == 4) {
+            std::ofstream outputer;
+            outputer.open(".supershell");
+            for (auto &&x: history) {
+                outputer << x << std::endl;
+            }
+            outputer.close();
+            pid_t pid = getpid();
+            kill(pid, SIGTERM);
+        } else if (character == '\n') {
+            break;
+        } else {
+            input_buffer += char(character);
+            if (input_buffer == UP) {
+                std::cout << "\b\b\b\b    \b\b\b\b";
+                if (command_number > 0) {
+                    command_number--;
+                    if (command_number < history.size() - 1) {
+                        for (auto i = 0; i < history[command_number + 1].size(); ++i)
+                            std::cout << "\b";
+                        for (auto i = 0; i < history[command_number + 1].size(); ++i)
+                            std::cout << " ";
+                        for (auto i = 0; i < history[command_number + 1].size(); ++i)
+                            std::cout << "\b";
+                    }
+                    std::cout << history[command_number];
+                }
+                cmd = history[command_number];
+                input_buffer = "";
+            } else if (input_buffer == DOWN) {
+                std::cout << "\b\b\b\b    \b\b\b\b";
+                if (command_number < history.size()) {
+                    command_number++;
+                    if (command_number > 0) {
+                        for (auto i = 0; i < history[command_number - 1].size(); ++i)
+                            std::cout << "\b";
+                        for (auto i = 0; i < history[command_number - 1].size(); ++i)
+                            std::cout << " ";
+                        for (auto i = 0; i < history[command_number - 1].size(); ++i)
+                            std::cout << "\b";
+                    }
+                    if (command_number != history.size())
+                        std::cout << history[command_number];
+                }
+                if (command_number != history.size())
+                    cmd = history[command_number];
+                else
+                    cmd="";
+                input_buffer = "";
+            } else {
+                cmd += input_buffer[input_buffer.size()-1];
+            }
+        }
+    }
     auto temp = split(cmd, " ");
     if (temp[0][0] == '!') {
         unsigned long long n;
-        command_number = history.size();
         if (temp[0][1] == '!') {
             n = command_number - 1;
         } else {
@@ -225,7 +284,6 @@ bool spilt_command() {
     if (temp[0] == "history") {
         if (cmd[0] != '!')
             history.push_back(cmd);
-        command_number = history.size();
         unsigned long long n = stoull(temp[1]);
         if (n > command_number)
             n = command_number;
@@ -306,12 +364,12 @@ std::vector<std::string> split(std::string s, const std::string &delimiter) {
     return res;
 }
 
-void read_history(){
+void read_history() {
     std::ifstream inputer;
     inputer.open(".supershell");
     if (inputer.is_open()) {
         std::string temp;
-        while (getline(inputer,temp)) {
+        while (getline(inputer, temp)) {
             history.push_back(temp);
         }
         inputer.close();

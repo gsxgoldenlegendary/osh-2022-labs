@@ -12,6 +12,8 @@
 #include <pwd.h>
 
 #define BUFFER_SIZE 256
+#define     UP      "\033[A"
+#define     DOWN    "\033[B"
 
 enum Status {
     RESULT_NORMAL,

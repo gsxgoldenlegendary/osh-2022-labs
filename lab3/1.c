@@ -6,6 +6,11 @@
 #include <netinet/in.h>
 #include <pthread.h>
 
+
+#define MAX_MESSAGE_LENGTH 1048576
+#define MAX_SLICE_NUM 512
+#define SEND_BUFFER_LENGTH 1024
+
 struct Pipe {
     int fd_send;
     int fd_recv;
@@ -13,19 +18,48 @@ struct Pipe {
 
 void *handle_chat(void *data) {
     struct Pipe *pipe = (struct Pipe *) data;
-    char recv_buffer[1048586];
-    char send_buffer[1048586] = "Message: ";
-    char string[2] = "\n";
-    ssize_t len;
-    while ((len = recv(pipe->fd_send, recv_buffer, 1000, 0)) > 0) {
-        for (int head = 0, tail = 0; head < len; tail++) {
-            if (recv_buffer[tail] == '\n') {
-                strcpy(send_buffer + 8, recv_buffer + head);
-                send(pipe->fd_recv, send_buffer, 8 + tail - head + 1, 0);
-                head = tail + 1;
+    char message[MAX_MESSAGE_LENGTH + 8] = "Message:";
+    char buffer[SEND_BUFFER_LENGTH];
+    ssize_t length;
+    long head = 8;
+    while (1) {
+        length = recv(pipe->fd_send, buffer, SEND_BUFFER_LENGTH - 12, 0);
+        int i;
+        long signal = 0;
+        long number = 0;
+        for (i = 0; i < length; i++) {
+            if (buffer[i] == '\n') {
+                number = i - signal + 1;
+                strncpy(message + head, buffer + signal, number);
+                long remain = head + number;
+                long sent = 0;
+                while (remain > 0) {
+                    sent = send(pipe->fd_recv, message + sent, remain, 0);
+                    if (sent == -1) {
+                        perror("send");
+                        exit(-1);
+                    }
+                    remain -= sent;
+                }
+                signal = i + 1;
+                head = 8;
             }
         }
-
+        if (signal != length) {
+            number = length - signal;
+            strncpy(message + head, buffer + signal, number);
+//            head = head + number;
+            long remain = head + number;
+            long sent = 0;
+            while (remain > 0) {
+                sent = send(pipe->fd_recv, message + sent, remain, 0);
+                if (sent == -1) {
+                    perror("send");
+                    exit(-1);
+                }
+                remain -= sent;
+            }
+        }
     }
     return NULL;
 }

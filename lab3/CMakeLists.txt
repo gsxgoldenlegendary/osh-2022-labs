@@ -3,6 +3,9 @@ project(lab3 C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(lab3
+add_executable(1
         1.c)
-target_link_libraries(lab3 pthread)
+target_link_libraries(1 pthread)
+add_executable(0
+        0.c)
+target_link_libraries(0 pthread)

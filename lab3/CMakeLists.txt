@@ -9,3 +9,7 @@ target_link_libraries(1 pthread)
 add_executable(0
         0.c)
 target_link_libraries(0 pthread)
+
+add_executable(2
+        2.c)
+target_link_libraries(2 pthread)

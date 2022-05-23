@@ -8,7 +8,6 @@
 
 
 #define MAX_MESSAGE_LENGTH 1048576
-#define MAX_SLICE_NUM 512
 #define SEND_BUFFER_LENGTH 1024
 
 struct Pipe {

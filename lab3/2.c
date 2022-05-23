@@ -75,6 +75,7 @@ void *handle_chat(void *data) {
                         }
                         remain -= sent;
                     }
+                    send(client[j],"\n",1,0);
                 }
             }
             pthread_mutex_unlock(&mutex);
@@ -127,7 +128,7 @@ int main(int argc, char **argv) {
             return 1;
         }
     }
-    return 0;
+        return 0;
 
 //    int fd1 = accept(fd, NULL, NULL);
 //    int fd2 = accept(fd, NULL, NULL);

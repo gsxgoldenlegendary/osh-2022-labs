@@ -35,6 +35,8 @@ void *read_chat(void*data){
             stpcpy(message, message_queue[info->id].message[message_queue[info->id].head]);
             message_queue[info->id].head = (message_queue[info->id].head + 1) % MAX_QUEUE;
             message_queue[info->id].length--;
+//            printf("Thread %d : to be output: %s.\n", info->id, message);
+//            fflush(stdout);
             pthread_mutex_unlock(&mutex);
             unsigned long remain = strlen(message);
             long sent = 0;
@@ -47,72 +49,71 @@ void *read_chat(void*data){
                 remain -= sent;
             }
         }
-//        printf("Thread %d output ended with message %s.\n", info->id, message);
-//        fflush(stdout);
+
     }
 }
 void *write_chat(void *data) {
     struct Info *info = (struct Info *) data;
     char buffer[SEND_BUFFER_LENGTH];
     ssize_t length;
-    long head = 8;
+    long head = 9;
     char message[MAX_MESSAGE_LENGTH];
-    sprintf(message, "Client %d:", info->id);
-    while (1) {
-        length = recv(info->fd_recv, buffer, SEND_BUFFER_LENGTH - 12, 0);
 
+    while (1) {
+        memset(buffer,0,SEND_BUFFER_LENGTH);
+        memset(message,0,SEND_BUFFER_LENGTH);
+        sprintf(message, "Client %d:", info->id);
+        length = recv(info->fd_recv, buffer, SEND_BUFFER_LENGTH - 12, 0);
         if (length <= 0) {
             occupied[info->id] = 0;
             close(client[info->id]);
             return 0;
         }
-        printf("Thread %d received %s, sized %zd\n", info->id, buffer, length);
-        fflush(stdout);
+       printf("Thread %d received %s, sized %zd\n", info->id, buffer, length);
+       fflush(stdout);
         int i;
         long signal = 0;
         long number = 0;
         for (i = 0; i < length; i++) {
             if (buffer[i] == '\n') {
                 number = i - signal + 1;
-                strncpy(message + head, buffer + signal, number);
 
-                //printf("%d,%d,%d",message_queue[info->id].head,message_queue[info->id].tail,message_queue[info->id].length);
-                fflush(stdout);
+                strncpy(message + head, buffer + signal, number);
                 for (int j = 0; j < MAX_USER; j++) {
                     if (occupied[j] && j != info->id) {
                         if (message_queue->length == MAX_QUEUE) {
                             perror("full queue");
                             exit(2);
                         }
-                        printf("To be sent:%s\n", message);
                         pthread_mutex_lock(&mutex);
+                        printf("To be sent:%s\n", message);
                         strcpy(message_queue[j].message[message_queue[j].tail], message);
                         message_queue[j].tail = (message_queue[j].tail + 1) % MAX_QUEUE;
                         message_queue[j].length++;
                         pthread_mutex_unlock(&mutex);
                     }
                 }
-
                 signal = i + 1;
-                head = 8;
             }
         }
         if (signal != length) {
             number = length - signal;
             strncpy(message + head, buffer + signal, number);
-            pthread_mutex_lock(&mutex);
             for (int j = 0; j < MAX_USER; j++) {
                 if (occupied[j] && j != info->id) {
                     if (message_queue->length == MAX_QUEUE) {
                         perror("full queue");
                         exit(2);
                     }
+                    pthread_mutex_lock(&mutex);
+                    printf("To be sent:%s\n", message);
                     strcpy(message_queue[j].message[message_queue[j].tail], message);
                     message_queue[j].tail = (message_queue[j].tail + 1) % MAX_QUEUE;
                     message_queue[j].length++;
+                    pthread_mutex_unlock(&mutex);
                 }
             }
-            pthread_mutex_unlock(&mutex);
+
         }
     }
 }

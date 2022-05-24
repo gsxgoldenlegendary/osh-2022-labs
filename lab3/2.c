@@ -5,8 +5,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include<sys/types.h>
 
 #define MAX_USER 32
+#define MAX_QUEUE 32
 #define SEND_BUFFER_LENGTH 1024
 #define MAX_MESSAGE_LENGTH 1048576
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -17,21 +19,55 @@ struct Info {
     int fd_recv;
     int id;
 };
+struct Message_queue {
+    int head;
+    int tail;
+    int length;
+    char message[MAX_QUEUE][MAX_MESSAGE_LENGTH];
+} message_queue[MAX_USER];
 
-void *handle_chat(void *data) {
+void *read_chat(void*data){
+    struct Info *info = (struct Info *) data;
+    char message[MAX_MESSAGE_LENGTH];
+    while (1) {
+        for (; message_queue[info->id].length != 0;) {
+            pthread_mutex_lock(&mutex);
+            stpcpy(message, message_queue[info->id].message[message_queue[info->id].head]);
+            message_queue[info->id].head = (message_queue[info->id].head + 1) % MAX_QUEUE;
+            message_queue[info->id].length--;
+            pthread_mutex_unlock(&mutex);
+            unsigned long remain = strlen(message);
+            long sent = 0;
+            while (remain > 0) {
+                sent = send(client[info->id], message + sent, remain, 0);
+                if (sent == -1) {
+                    perror("send");
+                    exit(-1);
+                }
+                remain -= sent;
+            }
+        }
+//        printf("Thread %d output ended with message %s.\n", info->id, message);
+//        fflush(stdout);
+    }
+}
+void *write_chat(void *data) {
     struct Info *info = (struct Info *) data;
     char buffer[SEND_BUFFER_LENGTH];
-    char message[MAX_MESSAGE_LENGTH];
-    sprintf(message, "Client %d: ", info->id);
     ssize_t length;
     long head = 8;
+    char message[MAX_MESSAGE_LENGTH];
+    sprintf(message, "Client %d:", info->id);
     while (1) {
         length = recv(info->fd_recv, buffer, SEND_BUFFER_LENGTH - 12, 0);
+
         if (length <= 0) {
             occupied[info->id] = 0;
             close(client[info->id]);
             return 0;
         }
+        printf("Thread %d received %s, sized %zd\n", info->id, buffer, length);
+        fflush(stdout);
         int i;
         long signal = 0;
         long number = 0;
@@ -39,22 +75,24 @@ void *handle_chat(void *data) {
             if (buffer[i] == '\n') {
                 number = i - signal + 1;
                 strncpy(message + head, buffer + signal, number);
-                pthread_mutex_lock(&mutex);
+
+                //printf("%d,%d,%d",message_queue[info->id].head,message_queue[info->id].tail,message_queue[info->id].length);
+                fflush(stdout);
                 for (int j = 0; j < MAX_USER; j++) {
                     if (occupied[j] && j != info->id) {
-                        long remain = head + number;
-                        long sent = 0;
-                        while (remain > 0) {
-                            sent = send(client[j], message + sent, remain, 0);
-                            if (sent == -1) {
-                                perror("send");
-                                exit(-1);
-                            }
-                            remain -= sent;
+                        if (message_queue->length == MAX_QUEUE) {
+                            perror("full queue");
+                            exit(2);
                         }
+                        printf("To be sent:%s\n", message);
+                        pthread_mutex_lock(&mutex);
+                        strcpy(message_queue[j].message[message_queue[j].tail], message);
+                        message_queue[j].tail = (message_queue[j].tail + 1) % MAX_QUEUE;
+                        message_queue[j].length++;
+                        pthread_mutex_unlock(&mutex);
                     }
                 }
-                pthread_mutex_unlock(&mutex);
+
                 signal = i + 1;
                 head = 8;
             }
@@ -65,23 +103,18 @@ void *handle_chat(void *data) {
             pthread_mutex_lock(&mutex);
             for (int j = 0; j < MAX_USER; j++) {
                 if (occupied[j] && j != info->id) {
-                    long remain = head + number;
-                    long sent = 0;
-                    while (remain > 0) {
-                        sent = send(client[j], message + sent, remain, 0);
-                        if (sent == -1) {
-                            perror("send");
-                            exit(-1);
-                        }
-                        remain -= sent;
+                    if (message_queue->length == MAX_QUEUE) {
+                        perror("full queue");
+                        exit(2);
                     }
-                    send(client[j],"\n",1,0);
+                    strcpy(message_queue[j].message[message_queue[j].tail], message);
+                    message_queue[j].tail = (message_queue[j].tail + 1) % MAX_QUEUE;
+                    message_queue[j].length++;
                 }
             }
             pthread_mutex_unlock(&mutex);
         }
     }
-    return NULL;
 }
 
 int main(int argc, char **argv) {
@@ -104,7 +137,7 @@ int main(int argc, char **argv) {
         perror("listen");
         return 1;
     }
-    pthread_t thread[MAX_USER];
+    pthread_t thread[MAX_USER*2];
     struct Info info[MAX_USER];
     for (;;) {
         int temp_client = accept(fd, NULL, NULL);
@@ -119,7 +152,8 @@ int main(int argc, char **argv) {
                 client[i] = temp_client;
                 info[i].fd_recv = temp_client;
                 info[i].id = i;
-                pthread_create(&thread[i], NULL, handle_chat, (void *) &info[i]);
+                pthread_create(&thread[2*i], NULL, read_chat, (void *) &info[i]);
+                pthread_create(&thread[2*i+1], NULL, write_chat, (void *) &info[i]);
                 break;
             }
         }
@@ -128,24 +162,4 @@ int main(int argc, char **argv) {
             return 1;
         }
     }
-        return 0;
-
-//    int fd1 = accept(fd, NULL, NULL);
-//    int fd2 = accept(fd, NULL, NULL);
-//    if (fd1 == -1 || fd2 == -1) {
-//        perror("accept");
-//        return 1;
-//    }
-//    pthread_t thread1, thread2;
-//    struct Pipe pipe1;
-//    struct Pipe pipe2;
-//    pipe1.fd_send = fd1;
-//    pipe1.fd_recv = fd2;
-//    pipe2.fd_send = fd2;
-//    pipe2.fd_recv = fd1;
-//    pthread_create(&thread1, NULL, handle_chat, (void *)&pipe1);
-//    pthread_create(&thread2, NULL, handle_chat, (void *)&pipe2);
-//    pthread_join(thread1, NULL);
-//    pthread_join(thread2, NULL);
-    return 0;
 }

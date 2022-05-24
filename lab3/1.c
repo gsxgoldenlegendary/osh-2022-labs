@@ -15,7 +15,7 @@ struct Pipe {
     int fd_recv;
 };
 
-void *write_chat(void *data) {
+void *handle_chat(void *data) {
     struct Pipe *pipe = (struct Pipe *) data;
     char message[MAX_MESSAGE_LENGTH + 8] = "Message:";
     char buffer[SEND_BUFFER_LENGTH];
@@ -96,8 +96,8 @@ int main(int argc, char **argv) {
     pipe1.fd_recv = fd2;
     pipe2.fd_send = fd2;
     pipe2.fd_recv = fd1;
-    pthread_create(&thread1, NULL, write_chat, (void *) &pipe1);
-    pthread_create(&thread2, NULL, write_chat, (void *) &pipe2);
+    pthread_create(&thread1, NULL, handle_chat, (void *) &pipe1);
+    pthread_create(&thread2, NULL, handle_chat, (void *) &pipe2);
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
     return 0;

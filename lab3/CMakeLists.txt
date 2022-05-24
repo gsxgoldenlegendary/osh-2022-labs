@@ -15,4 +15,3 @@ add_executable(2
 target_link_libraries(2 pthread)
 add_executable(3
         3.c)
-
